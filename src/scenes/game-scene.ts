@@ -101,38 +101,6 @@ export default class GameScene extends Phaser.Scene {
             }
             i.update()
         })
-        // let eWorld = this.engine.getWorldState()
-        // console.log("pre sync", this.items.map((x)=>x.map((y)=>y?.itemInstance)))
-        //
-        // for (let x = 0; x < eWorld.length; x++) {
-        //     for (let y = 0; y < eWorld[x].length; y++) {
-        //         if (eWorld[x][y] == undefined && this.items[x][y] != undefined) {
-        //             this.items[x][y].destroy(true)
-        //             this.items[x][y] = undefined
-        //
-        //         }
-        //
-        //         if (eWorld[x][y] != undefined && this.items[x][y] == undefined) {
-        //             this.items[x][y] =
-        //             this.input.setDraggable(this.items[x][y])
-        //
-        //         }
-        //
-        //         if(this.items[x][y] != undefined){
-        //             this.items[x][y].update()
-        //         }
-        //
-        //         // else if (eWorld[x][y] != undefined && this.items[x][y] != undefined && eWorld[x][y].dirty) {
-        //         //     this.items[x][y].destroy(true)
-        //         //     this.items[x][y] = new ItemTile(this, x*this.tileSize, y*this.tileSize, eWorld[x][y])
-        //         //     this.input.setDraggable(this.items[x][y])
-        //         //     this.items[x][y].itemInstance.dirty = false
-        //         // }
-        //
-        //     }
-        // }
-        // console.log("post sync", this.items.map((x)=>x.map((y)=>y?.itemInstance)))
-
     }
 
     update(time: number, delta: number) {

@@ -1,10 +1,8 @@
 import * as Phaser from 'phaser';
-import Rectangle = Phaser.Geom.Rectangle;
-import InputPlugin = Phaser.Input.InputPlugin;
 import ItemSlot from "./ItemSlot";
 import GameScene from "../scenes/game-scene";
-import DeepCopy = Phaser.Utils.Objects.DeepCopy;
 import {ItemInstance} from "../engine/ItemInstance";
+import DeepCopy = Phaser.Utils.Objects.DeepCopy;
 
 
 export default class ItemTile extends Phaser.GameObjects.Image {
@@ -49,7 +47,6 @@ export default class ItemTile extends Phaser.GameObjects.Image {
         })
 
 
-
         this.itemInstance.dirty = false
         console.log("refreshed", this.itemInstance, this.lastSnapshot)
 
@@ -58,7 +55,7 @@ export default class ItemTile extends Phaser.GameObjects.Image {
     }
 
 
-    public handleDrag(pointer: Phaser.Input.Pointer, dragX: number, dragY: number) {
+    public handleDrag(_pointer: Phaser.Input.Pointer, dragX: number, dragY: number) {
         this.scene.children.bringToTop(this);
 
         this.scene.registry.set("dragging", true)
@@ -66,7 +63,7 @@ export default class ItemTile extends Phaser.GameObjects.Image {
         this.y = dragY;
     }
 
-    public handleDragEnd(pointer: Phaser.Input.Pointer, dragX: number, dragY: number) {
+    public handleDragEnd() {
         this.scene.registry.set("dragging", false)
 
     }
