@@ -15,4 +15,5 @@ interface SwappedItemParams {
 }
 
 
-export {Events, CraftedItemParams, SwappedItemParams}
+export {Events};
+export type { CraftedItemParams, SwappedItemParams };

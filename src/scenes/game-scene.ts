@@ -1,9 +1,6 @@
 import * as Phaser from 'phaser';
 import ItemTile from "../objects/ItemTile";
-import * as phaser from "phaser";
 import ItemSlot from "../objects/ItemSlot";
-import Vector2 = Phaser.Math.Vector2;
-import UUID = Phaser.Utils.String.UUID;
 import PokkitEngine from "../engine/PokkitEngine";
 import {Recipe} from "../model/Recipe";
 import {ItemDefinition} from "../engine/ItemDefinition";
@@ -19,17 +16,17 @@ export default class GameScene extends Phaser.Scene {
     preload() {
         let itemDefs = new Map<String, ItemDefinition>()
         itemDefs.set("0_0", {
-            id: "0_0", tick: (i, e) => {
+            id: "0_0", tick: (_i, e) => {
                 console.log("i ticked!", e)
             }, name: "Acorn", imageKey: "tree_0"
         })
         itemDefs.set("0_1", {
-            id: "0_1", tick: (i, e) => {
+            id: "0_1", tick: (_i, e) => {
                 console.log("im a sapling and I ticked!", e)
             }, name: "Sapling", imageKey: "tree_1"
         })
         itemDefs.set("0_2", {
-            id: "0_2", tick: (i, e) => {
+            id: "0_2", tick: (_i, e) => {
                 console.log("im a tree and I ticked!", e)
             }, name: "Tree", imageKey: "tree_2"
         })
@@ -65,7 +62,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.cameras.main.setBounds(-100, -100, this.worldSize + 100, this.worldSize + 100)
         let gKey = this.input.keyboard.addKey("G")
-        gKey.on('up', (evt) => {
+        gKey.on('up', () => {
             this.slots.forEach((x) => {
                 x.forEach((s) => {
                     s.toggleOutline()
@@ -74,13 +71,13 @@ export default class GameScene extends Phaser.Scene {
         })
 
         let tKey = this.input.keyboard.addKey("T")
-        tKey.on('up', (evt) => {
+        tKey.on('up', () => {
             this.engine.tick()
             this.syncWorld()
         })
 
         let rKey = this.input.keyboard.addKey("R")
-        rKey.on('up', (evt) => {
+        rKey.on('up', () => {
             let item = this.engine.createItemAt("0_0", 0, 0)
             if (!item) return
             let itemTile = new ItemTile(this, 0, 0, item, this.tileSize)
@@ -90,6 +87,7 @@ export default class GameScene extends Phaser.Scene {
         })
 
         this.events.on("item_dropped", (evt) => {
+            this.syncWorld()
             this.engine.swapItems(evt.oldPos, evt.newPos)
             this.syncWorld()
         })

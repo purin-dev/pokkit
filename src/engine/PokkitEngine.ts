@@ -1,14 +1,17 @@
+import * as Phaser from 'phaser';
+
 import Vector2 = Phaser.Math.Vector2;
 import UUID = Phaser.Utils.String.UUID;
-import * as Phaser from 'phaser';
 import {Recipe} from "../model/Recipe";
 import {ItemInstance} from "./ItemInstance";
 import {ItemDefinition} from "./ItemDefinition";
-import {CraftedItemParams, Events} from "./Events";
+import { Events} from "./Events";
 
 
 //TODO: This package should have no dependencies on phaser libs
 
+//TODO: Maybe instead of using references to ItemInstances in the game, it can instead be callback driven
+// I.e., when a space is updated - notify the game scene about it
 export default class PokkitEngine {
     public itemDefinitions: Map<String, ItemDefinition> = new Map<String, ItemDefinition>()
     public recipes: Recipe[] = []
@@ -44,10 +47,10 @@ export default class PokkitEngine {
 
     public createItemAt(definitionId: string, x: number, y: number): ItemInstance | undefined{
         if(!this.itemDefinitions.has(definitionId)) {
-            return
+            return undefined
         }
         if(this.getItemAt(x, y) != undefined){
-            return
+            return undefined
         }
 
         this.worldState[x][y] = this.instantiateItem(definitionId, x, y)
@@ -66,6 +69,7 @@ export default class PokkitEngine {
 
         if(this.worldState[b.x][b.y] == undefined){
             //we moving
+            console.log(`moving from ${a.x}, ${a.y} to ${b.x}, ${b.y}`)
             this.worldState[b.x][b.y] = this.worldState[a.x][a.y]
             this.worldState[a.x][a.y] = undefined
 
@@ -74,6 +78,7 @@ export default class PokkitEngine {
             this.worldState[b.x][b.y].dirty = true
             return;
         }
+
         let recipe = this.getRecipeForItems(this.worldState[a.x][a.y].itemDefinitionId, this.worldState[b.x][b.y].itemDefinitionId)
         if(recipe != undefined){
             console.log(`crafted recipe ${recipe.name}`)
@@ -86,6 +91,8 @@ export default class PokkitEngine {
 
 
         // we swappin
+        console.log(`swapping ${a.x}, ${a.y} with ${b.x}, ${b.y}`)
+
         const swap = this.worldState[b.x][b.y]
         this.worldState[b.x][b.y] = this.worldState[a.x][a.y]
         this.worldState[a.x][a.y] = swap

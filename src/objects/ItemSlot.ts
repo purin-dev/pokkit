@@ -53,20 +53,11 @@ export default class ItemSlot extends Phaser.GameObjects.Container {
 
         this.scene.events.emit("item_dropped", {oldPos: {x: item.itemInstance.x, y: item.itemInstance.y}, newPos: {x: this.gameX, y: this.gameY}})
 
-        this.graphics?.clear()
-        this.graphics?.lineStyle(5, 0x00ffff)
-        this.graphics?.strokeRect(this.x - this.width / 2, this.y - this.dropZone.input.hitArea.height / 2, this.dropZone.input.hitArea.width, this.dropZone.input.hitArea.height)
-
     }
 
     public removedItem(item: ItemTile){
         console.log("bye from drop zone! {}", item)
-
         item.slot = undefined;
-        this.graphics?.lineStyle(2, 0xffff00, 0.5)
-        this.graphics?.clear()
-        this.graphics?.strokeRect(this.x - this.width / 2, this.y - this.dropZone.input.hitArea.height / 2, this.dropZone.input.hitArea.width, this.dropZone.input.hitArea.height)
-
     }
 
 

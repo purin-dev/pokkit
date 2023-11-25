@@ -5,9 +5,10 @@ import GameScene from "./scenes/game-scene";
 
 const config = {
     type: Phaser.AUTO,
-    backgroundColor: '#0a2b39',
-
+    backgroundColor: '#071b25',
+    pixelArt: true,
     scene: GameScene
 };
 
+//@ts-ignore
 const game = new Phaser.Game(config);
