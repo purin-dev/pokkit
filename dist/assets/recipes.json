@@ -1,0 +1,14 @@
+{
+  "recipes": [
+    {
+      "name": "tree_upgrade_0",
+      "ingredients": ["0_0", "0_0"],
+      "result": "0_1"
+    },
+    {
+      "name": "tree_upgrade_1",
+      "ingredients": ["0_1", "0_1"],
+      "result": "0_2"
+    }
+  ]
+}

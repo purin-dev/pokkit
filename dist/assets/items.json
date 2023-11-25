@@ -1,0 +1,19 @@
+{
+  "items": {
+    "0_0": {
+      "id": "0_0",
+      "name": "Acorn",
+      "imageKey": "tree_0"
+    },
+    "0_1": {
+      "id": "0_1",
+      "name": "Sapling",
+      "imageKey": "tree_1"
+    },
+    "0_2": {
+      "id": "0_2",
+      "name": "Tree",
+      "imageKey": "tree_2"
+    }
+  }
+}

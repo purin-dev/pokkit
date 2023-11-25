@@ -1,0 +1,159 @@
+import * as Phaser from 'phaser';
+import ItemTile from "../objects/ItemTile";
+import * as phaser from "phaser";
+import ItemSlot from "../objects/ItemSlot";
+import Vector2 = Phaser.Math.Vector2;
+import UUID = Phaser.Utils.String.UUID;
+import PokkitEngine from "../engine/PokkitEngine";
+import {Recipe} from "../model/Recipe";
+import {ItemDefinition} from "../engine/ItemDefinition";
+
+export default class GameScene extends Phaser.Scene {
+
+    public engine: PokkitEngine
+    public worldSize = 640;
+    public tileSize = this.worldSize / 10;
+    public slots: ItemSlot[][] = [[]]
+    public items: ItemTile[] = []
+
+    preload() {
+        let itemDefs = new Map<String, ItemDefinition>()
+        itemDefs.set("0_0", {
+            id: "0_0", tick: (i, e) => {
+                console.log("i ticked!", e)
+            }, name: "Acorn", imageKey: "tree_0"
+        })
+        itemDefs.set("0_1", {
+            id: "0_1", tick: (i, e) => {
+                console.log("im a sapling and I ticked!", e)
+            }, name: "Sapling", imageKey: "tree_1"
+        })
+        itemDefs.set("0_2", {
+            id: "0_2", tick: (i, e) => {
+                console.log("im a tree and I ticked!", e)
+            }, name: "Tree", imageKey: "tree_2"
+        })
+        let recipes: Recipe[] = [
+            {
+                id: "0",
+                name: "upgrade acorn",
+                result: "0_1",
+                ingredientId1: "0_0",
+                ingredientId2: "0_0"
+            },
+            {
+                id: "0",
+                name: "upgrade sapling",
+                result: "0_2",
+                ingredientId1: "0_1",
+                ingredientId2: "0_1"
+            }
+        ]
+        this.engine = new PokkitEngine(this.worldSize / this.tileSize, itemDefs, recipes)
+        this.load.pack('preload', './assets/assets.json', 'preload')
+    }
+
+    create() {
+
+        for (let x = 0; x < this.worldSize / this.tileSize; x++) {
+            for (let y = 0; y < this.worldSize / this.tileSize; y++) {
+                if (!this.slots[x]) this.slots[x] = []
+                this.slots[x][y] = new ItemSlot(this, x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize, x, y)
+            }
+        }
+
+
+        this.cameras.main.setBounds(-100, -100, this.worldSize + 100, this.worldSize + 100)
+        let gKey = this.input.keyboard.addKey("G")
+        gKey.on('up', (evt) => {
+            this.slots.forEach((x) => {
+                x.forEach((s) => {
+                    s.toggleOutline()
+                })
+            })
+        })
+
+        let tKey = this.input.keyboard.addKey("T")
+        tKey.on('up', (evt) => {
+            this.engine.tick()
+            this.syncWorld()
+        })
+
+        let rKey = this.input.keyboard.addKey("R")
+        rKey.on('up', (evt) => {
+            let item = this.engine.createItemAt("0_0", 0, 0)
+            if (!item) return
+            let itemTile = new ItemTile(this, 0, 0, item, this.tileSize)
+            this.input.setDraggable(itemTile)
+            this.items.push(itemTile)
+            this.syncWorld()
+        })
+
+        this.events.on("item_dropped", (evt) => {
+            this.engine.swapItems(evt.oldPos, evt.newPos)
+            this.syncWorld()
+        })
+    }
+
+    syncWorld() {
+        this.items.forEach((i, idx) => {
+            if (this.engine.getItemAt(i.itemInstance.x, i.itemInstance.y) == undefined) {
+                i.destroy(true)
+                this.items.splice(idx, 1)
+            }
+            i.update()
+        })
+        // let eWorld = this.engine.getWorldState()
+        // console.log("pre sync", this.items.map((x)=>x.map((y)=>y?.itemInstance)))
+        //
+        // for (let x = 0; x < eWorld.length; x++) {
+        //     for (let y = 0; y < eWorld[x].length; y++) {
+        //         if (eWorld[x][y] == undefined && this.items[x][y] != undefined) {
+        //             this.items[x][y].destroy(true)
+        //             this.items[x][y] = undefined
+        //
+        //         }
+        //
+        //         if (eWorld[x][y] != undefined && this.items[x][y] == undefined) {
+        //             this.items[x][y] =
+        //             this.input.setDraggable(this.items[x][y])
+        //
+        //         }
+        //
+        //         if(this.items[x][y] != undefined){
+        //             this.items[x][y].update()
+        //         }
+        //
+        //         // else if (eWorld[x][y] != undefined && this.items[x][y] != undefined && eWorld[x][y].dirty) {
+        //         //     this.items[x][y].destroy(true)
+        //         //     this.items[x][y] = new ItemTile(this, x*this.tileSize, y*this.tileSize, eWorld[x][y])
+        //         //     this.input.setDraggable(this.items[x][y])
+        //         //     this.items[x][y].itemInstance.dirty = false
+        //         // }
+        //
+        //     }
+        // }
+        // console.log("post sync", this.items.map((x)=>x.map((y)=>y?.itemInstance)))
+
+    }
+
+    update(time: number, delta: number) {
+        super.update(time, delta);
+
+        // Camera Panning
+        if (this.input.activePointer.isDown && !this.registry.get("dragging")) {
+            let ppos = (this.input.activePointer.prevPosition)
+            let npos = this.input.activePointer.position
+            this.cameras.main.scrollY -= (ppos.y - npos.y) / this.cameras.main.zoom
+            this.cameras.main.scrollX -= (ppos.x - npos.x) / this.cameras.main.zoom
+        }
+    }
+
+    constructor() {
+        super({
+            key: "MainScene"
+        });
+    }
+
+
+}
