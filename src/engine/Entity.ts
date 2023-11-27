@@ -1,8 +1,9 @@
-export interface ItemInstance {
+export interface Entity {
     itemDefinitionId: string
     uuid: string
     x: number
     y: number
     customData: any
-    dirty: boolean
+    onUpdate: () => void
+    onDestroy: () => void
 }

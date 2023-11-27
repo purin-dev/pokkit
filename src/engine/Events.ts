@@ -1,19 +1,21 @@
-import {ItemInstance} from "./ItemInstance";
+import {Entity} from "./Entity";
 
 enum Events {
     CRAFTED_ITEM = "crafted",
-    SWAPPED_ITEM = "swapped"
+    SWAPPED_ITEM = "swapped",
+    CREATED_ITEM = "created",
 }
+
 interface CraftedItemParams {
     recipeId: string
-    itemInstance: ItemInstance
+    itemInstance: Entity
 }
 
 interface SwappedItemParams {
-    sourceItem: ItemInstance
-    destItem: ItemInstance
+    sourceItem: Entity
+    destItem: Entity
 }
 
 
 export {Events};
-export type { CraftedItemParams, SwappedItemParams };
+export type {CraftedItemParams, SwappedItemParams};

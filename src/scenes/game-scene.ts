@@ -4,6 +4,8 @@ import ItemSlot from "../objects/ItemSlot";
 import PokkitEngine from "../engine/PokkitEngine";
 import {Recipe} from "../model/Recipe";
 import {ItemDefinition} from "../engine/ItemDefinition";
+import {Events} from "../engine/Events";
+import {Entity} from "../engine/Entity";
 
 export default class GameScene extends Phaser.Scene {
 
@@ -26,8 +28,11 @@ export default class GameScene extends Phaser.Scene {
             }, name: "Sapling", imageKey: "tree_1"
         })
         itemDefs.set("0_2", {
-            id: "0_2", tick: (_i, e) => {
-                console.log("im a tree and I ticked!", e)
+            id: "0_2", tick: (i, e) => {
+                let freeSpace = e.getFreeSpaceAroundPoint({x: i.x, y: i.y})
+                if (freeSpace) {
+                    e.createItemAt("0_0", freeSpace.x, freeSpace.y)
+                }
             }, name: "Tree", imageKey: "tree_2"
         })
         let recipes: Recipe[] = [
@@ -73,34 +78,27 @@ export default class GameScene extends Phaser.Scene {
         let tKey = this.input.keyboard.addKey("T")
         tKey.on('up', () => {
             this.engine.tick()
-            this.syncWorld()
         })
 
         let rKey = this.input.keyboard.addKey("R")
         rKey.on('up', () => {
-            let item = this.engine.createItemAt("0_0", 0, 0)
-            if (!item) return
-            let itemTile = new ItemTile(this, 0, 0, item, this.tileSize)
-            this.input.setDraggable(itemTile)
-            this.items.push(itemTile)
-            this.syncWorld()
+            this.engine.createItemAt("0_0", 0, 0)
         })
 
         this.events.on("item_dropped", (evt) => {
-            this.syncWorld()
             this.engine.swapItems(evt.oldPos, evt.newPos)
-            this.syncWorld()
+        })
+
+        this.engine.events.on(Events.CREATED_ITEM, (item: Entity) => {
+            this.createObjectForEntity(item)
         })
     }
 
-    syncWorld() {
-        this.items.forEach((i, idx) => {
-            if (this.engine.getItemAt(i.itemInstance.x, i.itemInstance.y) == undefined) {
-                i.destroy(true)
-                this.items.splice(idx, 1)
-            }
-            i.update()
-        })
+    createObjectForEntity(entity: Entity): ItemTile {
+        let itemTile = new ItemTile(this, entity, this.tileSize)
+        this.input.setDraggable(itemTile)
+        this.items.push(itemTile)
+        return itemTile
     }
 
     update(time: number, delta: number) {

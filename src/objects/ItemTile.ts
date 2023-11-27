@@ -1,56 +1,48 @@
 import * as Phaser from 'phaser';
 import ItemSlot from "./ItemSlot";
 import GameScene from "../scenes/game-scene";
-import {ItemInstance} from "../engine/ItemInstance";
-import DeepCopy = Phaser.Utils.Objects.DeepCopy;
+import {Entity} from "../engine/Entity";
 
 
 export default class ItemTile extends Phaser.GameObjects.Image {
     public type = "ItemTile"
     public slot: ItemSlot | undefined = undefined
-    public itemInstance: ItemInstance
-    private lastSnapshot: ItemInstance
+    public entity: Entity
     private tileSize: number
     public readonly id: string
 
-    constructor(scene: GameScene, x: number, y: number, instance: ItemInstance, tileSize: number) {
-        //todo: get def from instance
-        super(scene, x, y, scene.engine.itemDefinitions.get(instance.itemDefinitionId)?.imageKey)
+    constructor(scene: GameScene, entity: Entity, tileSize: number) {
+        super(scene, entity.x * tileSize, entity.y * tileSize, scene.engine.itemDefinitions.get(entity.itemDefinitionId)?.imageKey)
+        this.tileSize = tileSize
+        this.entity = entity
 
         this.setDisplaySize(tileSize, tileSize)
         this.setInteractive()
         this.scene.add.existing(this);
-        this.itemInstance = instance
-        this.lastSnapshot = DeepCopy(instance) as ItemInstance
+
+        this.entity.onUpdate = this.update.bind(this)
+        this.entity.onDestroy = this.destroy.bind(this, false)
 
 
-        this.tileSize = tileSize
         this.on('drag', this.handleDrag)
         this.on('drop', this.handleDrop, this)
         this.on('dragend', this.handleDragEnd, this)
-
-
+        this.update()
     }
 
     public update() {
-        if (this.lastSnapshot.itemDefinitionId != this.itemInstance.itemDefinitionId) {
-            let itemDef = (this.scene as GameScene).engine.itemDefinitions.get(this.itemInstance.itemDefinitionId)
-            this.setTexture(itemDef.imageKey)
-        }
+        let itemDef = (this.scene as GameScene).engine.itemDefinitions.get(this.entity.itemDefinitionId)
+        this.setTexture(itemDef.imageKey)
+
 
         this.scene?.tweens.add({
             targets: this,
-            x: this.itemInstance.x * this.tileSize,
-            y: this.itemInstance.y * this.tileSize,
+            x: this.entity.x * this.tileSize,
+            y: this.entity.y * this.tileSize,
             ease: 'Power1',
             duration: 100
         })
 
-
-        this.itemInstance.dirty = false
-        console.log("refreshed", this.itemInstance, this.lastSnapshot)
-
-        this.lastSnapshot = DeepCopy(this.itemInstance) as ItemInstance
 
     }
 
@@ -65,10 +57,13 @@ export default class ItemTile extends Phaser.GameObjects.Image {
 
     public handleDragEnd() {
         this.scene.registry.set("dragging", false)
-
+        console.log("drag end")
+        this.update()
     }
 
     public handleDrop(pointer: Phaser.Input.Pointer, dropZone: Phaser.GameObjects.GameObject) {
+        console.log("drop")
+
         this.scene.registry.set("dragging", false)
 
         console.log("drop!!", pointer, dropZone);
@@ -80,6 +75,9 @@ export default class ItemTile extends Phaser.GameObjects.Image {
             (dropZone.parentContainer as ItemSlot)?.droppedItem(this);
         }
 
+        if (!dropZone) {
+            this.update()
+        }
     }
 
 
