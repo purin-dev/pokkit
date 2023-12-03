@@ -1,7 +1,8 @@
 import * as Phaser from 'phaser';
+import {Scene} from 'phaser';
 import ItemSlot from "./ItemSlot";
-import GameScene from "../scenes/game-scene";
 import {Entity} from "../engine/Entity";
+import ItemRegistry from "../engine/registries/ItemRegistry";
 
 
 export default class ItemTile extends Phaser.GameObjects.Image {
@@ -11,8 +12,8 @@ export default class ItemTile extends Phaser.GameObjects.Image {
     private tileSize: number
     public readonly id: string
 
-    constructor(scene: GameScene, entity: Entity, tileSize: number) {
-        super(scene, entity.x * tileSize, entity.y * tileSize, scene.engine.itemDefinitions.get(entity.itemDefinitionId)?.imageKey)
+    constructor(scene: Scene, entity: Entity, tileSize: number) {
+        super(scene, entity.x * tileSize, entity.y * tileSize, ItemRegistry.get(entity.itemDefinitionId)?.imageKey)
         this.tileSize = tileSize
         this.entity = entity
 
@@ -31,7 +32,7 @@ export default class ItemTile extends Phaser.GameObjects.Image {
     }
 
     public update() {
-        let itemDef = (this.scene as GameScene).engine.itemDefinitions.get(this.entity.itemDefinitionId)
+        let itemDef = ItemRegistry.get(this.entity.itemDefinitionId)
         this.setTexture(itemDef.imageKey)
 
 
@@ -57,26 +58,17 @@ export default class ItemTile extends Phaser.GameObjects.Image {
 
     public handleDragEnd() {
         this.scene.registry.set("dragging", false)
-        console.log("drag end")
         this.update()
     }
 
-    public handleDrop(pointer: Phaser.Input.Pointer, dropZone: Phaser.GameObjects.GameObject) {
-        console.log("drop")
-
+    public handleDrop(_pointer: Phaser.Input.Pointer, dropZone: Phaser.GameObjects.GameObject) {
         this.scene.registry.set("dragging", false)
-
-        console.log("drop!!", pointer, dropZone);
 
         if (dropZone.parentContainer?.type == ItemSlot.TYPE) {
             if (this.slot) {
                 this.slot.removedItem(this)
             }
             (dropZone.parentContainer as ItemSlot)?.droppedItem(this);
-        }
-
-        if (!dropZone) {
-            this.update()
         }
     }
 

@@ -47,8 +47,6 @@ export default class ItemSlot extends Phaser.GameObjects.Container {
     }
 
     public droppedItem(item: ItemTile) {
-        console.log("hi from drop zone! {}", item)
-
         item.slot = this;
 
         this.scene.events.emit("item_dropped", {
@@ -59,7 +57,6 @@ export default class ItemSlot extends Phaser.GameObjects.Container {
     }
 
     public removedItem(item: ItemTile) {
-        console.log("bye from drop zone! {}", item)
         item.slot = undefined;
     }
 

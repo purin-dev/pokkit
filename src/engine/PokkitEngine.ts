@@ -1,30 +1,32 @@
 import * as Phaser from 'phaser';
-import {Recipe} from "../model/Recipe";
 import {Entity} from "./Entity";
-import {ItemDefinition} from "./ItemDefinition";
 import {Events} from "./Events";
 import {adjacentPoints, Point} from "./Point";
+import ItemRegistry from "./registries/ItemRegistry";
+import ComboRegistry from "./registries/ComboRegistry";
 import Vector2 = Phaser.Math.Vector2;
 import UUID = Phaser.Utils.String.UUID;
 
 
 //TODO: This package should have no dependencies on phaser libs
 
-//TODO: Maybe instead of using references to ItemInstances in the game, it can instead be callback driven
-// I.e., when a space is updated - notify the game scene about it
+
+export enum Phase {
+    TICK,
+    SPAWN_1,
+    CONSUME,
+    SPAWN_2,
+    DONE
+}
+
 export default class PokkitEngine {
-    public itemDefinitions: Map<String, ItemDefinition> = new Map<String, ItemDefinition>()
-    public recipes: Recipe[] = []
     // WorldState is [x][y] indexed state of each tile in the world
     private worldState: (Entity | undefined)[][] = [[]]
     private size: number
     public events: Phaser.Events.EventEmitter = new Phaser.Events.EventEmitter()
 
-
-    public constructor(size: number, itemDefinitions: Map<String, ItemDefinition>, recipes: Recipe[]) {
-        this.recipes = recipes
+    public constructor(size: number) {
         this.size = size
-        this.itemDefinitions = itemDefinitions
         for (let x = 0; x < size; x++) {
             for (let y = 0; y < size; y++) {
                 if (this.worldState[x] == undefined) this.worldState[x] = []
@@ -33,19 +35,49 @@ export default class PokkitEngine {
         }
     }
 
+    private currentPhase = Phase.TICK
+    private actionStacks = new Map<Phase, (() => void)[]>()
+
     public tick() {
+        this.currentPhase = Phase.TICK
+
         for (let x = 0; x < this.size; x++) {
             for (let y = 0; y < this.size; y++) {
                 if (this.worldState[x][y]) {
-                    this.itemDefinitions.get(this.worldState[x][y].itemDefinitionId)?.tick(this.worldState[x][y], this)
-
+                    ItemRegistry.get(this.worldState[x][y].itemDefinitionId)?.tick(this.worldState[x][y], this)
                 }
             }
         }
+
+        const phaseOrder = [Phase.SPAWN_1, Phase.CONSUME, Phase.SPAWN_2]
+        for (const phase of phaseOrder) {
+            console.log(`tick phase ${phase}`)
+            this.currentPhase = phase
+            if (this.actionStacks.get(phase)) {
+                while (this.actionStacks.get(phase).length) {
+                    this.actionStacks.get(phase).pop()()
+                }
+            }
+        }
+
+        this.currentPhase = Phase.DONE
+    }
+
+    public onPhase(phase: Phase, action: () => void) {
+        if (this.currentPhase > phase) {
+            console.log("error: tried to enqueue an action for a phase that has already processed")
+            return
+        }
+
+        if (this.actionStacks.get(phase) == undefined) {
+            this.actionStacks.set(phase, [])
+        }
+
+        this.actionStacks.get(phase).push(action)
     }
 
     public createItemAt(definitionId: string, x: number, y: number): Entity | undefined {
-        if (!this.itemDefinitions.has(definitionId)) {
+        if (!ItemRegistry.get(definitionId)) {
             return undefined
         }
         if (this.getItemAt({x: x, y: y}) != undefined) {
@@ -81,15 +113,12 @@ export default class PokkitEngine {
             return;
         }
 
-        let recipe = this.getRecipeForItems(this.worldState[a.x][a.y].itemDefinitionId, this.worldState[b.x][b.y].itemDefinitionId)
-        if (recipe != undefined) {
-            console.log(`crafted recipe ${recipe.name}`)
-            this.worldState[a.x][a.y].onDestroy()
-            this.worldState[a.x][a.y] = undefined
-            this.worldState[b.x][b.y].itemDefinitionId = recipe.result
+        let combo = ComboRegistry.find(this.worldState[a.x][a.y].itemDefinitionId, this.worldState[b.x][b.y].itemDefinitionId)
+        if (combo != undefined) {
+            combo.action(this.worldState[a.x][a.y], this.worldState[b.x][b.y], this)
+            console.log(`performed combo ${combo.name}`)
 
-            this.worldState[b.x][b.y].onUpdate()
-            this.events.emit(Events.CRAFTED_ITEM, {recipeId: recipe.id, itemInstance: this.worldState[b.x][b.y]})
+
             return;
         }
 
@@ -120,13 +149,6 @@ export default class PokkitEngine {
         return;
     }
 
-    public getRecipeForItems(itemId1: string, itemId2: string): Recipe | undefined {
-        return this.recipes.find((r) => {
-            return (r.ingredientId1 == itemId1 && r.ingredientId2 == itemId2) ||
-                (r.ingredientId2 == itemId1 && r.ingredientId1 == itemId2)
-        })
-    }
-
 
     public getItemAt(p: Point): Entity | undefined {
         if (p.x < 0 || p.x >= this.size) {
@@ -137,6 +159,16 @@ export default class PokkitEngine {
         }
 
         return this.worldState[p.x][p.y]
+    }
+
+    public destroyItemAt(p: Point) {
+        this.worldState[p.x][p.y].onDestroy()
+        this.worldState[p.x][p.y] = undefined
+    }
+
+    public changeDefinitionAt(p: Point, definitionId: string) {
+        this.worldState[p.x][p.y].itemDefinitionId = definitionId
+        this.worldState[p.x][p.y].onUpdate()
     }
 
     public getFreeSpaceAroundPoint(p: Point): Point | null {
@@ -176,10 +208,4 @@ export default class PokkitEngine {
             }
         }
     }
-
-
-    // Tick iterates elements and processes each items logic
-
-    // Update 2d array with changes
-
 }

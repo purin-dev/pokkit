@@ -1,11 +1,12 @@
 import * as Phaser from 'phaser';
 import ItemTile from "../objects/ItemTile";
 import ItemSlot from "../objects/ItemSlot";
-import PokkitEngine from "../engine/PokkitEngine";
-import {Recipe} from "../model/Recipe";
-import {ItemDefinition} from "../engine/ItemDefinition";
+import PokkitEngine, {Phase} from "../engine/PokkitEngine";
 import {Events} from "../engine/Events";
 import {Entity} from "../engine/Entity";
+import ItemRegistry from "../engine/registries/ItemRegistry";
+import ComboRegistry from "../engine/registries/ComboRegistry";
+import {CraftItem} from "../engine/actions/CommonComboActions";
 
 export default class GameScene extends Phaser.Scene {
 
@@ -16,42 +17,51 @@ export default class GameScene extends Phaser.Scene {
     public items: ItemTile[] = []
 
     preload() {
-        let itemDefs = new Map<String, ItemDefinition>()
-        itemDefs.set("0_0", {
+        ItemRegistry.register({
             id: "0_0", tick: (_i, e) => {
                 console.log("i ticked!", e)
             }, name: "Acorn", imageKey: "tree_0"
         })
-        itemDefs.set("0_1", {
+        ItemRegistry.register({
             id: "0_1", tick: (_i, e) => {
                 console.log("im a sapling and I ticked!", e)
             }, name: "Sapling", imageKey: "tree_1"
         })
-        itemDefs.set("0_2", {
+        ItemRegistry.register({
             id: "0_2", tick: (i, e) => {
-                let freeSpace = e.getFreeSpaceAroundPoint({x: i.x, y: i.y})
-                if (freeSpace) {
-                    e.createItemAt("0_0", freeSpace.x, freeSpace.y)
+                let hasSpawned = false;
+                let trySpawn = () => {
+                    if (!hasSpawned) {
+                        let freeSpace = e.getFreeSpaceAroundPoint({x: i.x, y: i.y})
+                        if (freeSpace) {
+                            if (e.createItemAt("0_0", freeSpace.x, freeSpace.y)) {
+                                hasSpawned = true
+                            }
+                        }
+                    }
                 }
+                e.onPhase(Phase.SPAWN_1, trySpawn)
+                e.onPhase(Phase.SPAWN_2, trySpawn)
+
             }, name: "Tree", imageKey: "tree_2"
         })
-        let recipes: Recipe[] = [
-            {
-                id: "0",
-                name: "upgrade acorn",
-                result: "0_1",
-                ingredientId1: "0_0",
-                ingredientId2: "0_0"
-            },
-            {
-                id: "0",
-                name: "upgrade sapling",
-                result: "0_2",
-                ingredientId1: "0_1",
-                ingredientId2: "0_1"
-            }
-        ]
-        this.engine = new PokkitEngine(this.worldSize / this.tileSize, itemDefs, recipes)
+
+        ComboRegistry.register({
+            id: "0",
+            name: "upgrade acorn",
+            ingredientId1: "0_0",
+            ingredientId2: "0_0",
+            action: CraftItem("0_1")
+        })
+        ComboRegistry.register({
+            id: "1",
+            name: "upgrade acorn",
+            ingredientId1: "0_1",
+            ingredientId2: "0_1",
+            action: CraftItem("0_2")
+        })
+
+        this.engine = new PokkitEngine(this.worldSize / this.tileSize)
         this.load.pack('preload', './assets/assets.json', 'preload')
     }
 
