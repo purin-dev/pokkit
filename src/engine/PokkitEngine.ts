@@ -38,7 +38,9 @@ export default class PokkitEngine {
     private currentPhase = Phase.TICK
     private actionStacks = new Map<Phase, (() => void)[]>()
 
+
     public tick() {
+        this.events.emit("tick")
         this.currentPhase = Phase.TICK
 
         for (let x = 0; x < this.size; x++) {
@@ -90,6 +92,10 @@ export default class PokkitEngine {
     }
 
     public swapItems(a: Vector2, b: Vector2) {
+        if (a.x < 0 || a.x >= this.size || a.y < 0 || a.y >= this.size) {
+            return;
+        }
+
         if (a.x == b.x && a.y == b.y) {
             this.worldState[a.x][a.y].onUpdate()
             return

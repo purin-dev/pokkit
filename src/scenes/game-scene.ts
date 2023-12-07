@@ -15,6 +15,8 @@ export default class GameScene extends Phaser.Scene {
     public tileSize = this.worldSize / 10;
     public slots: ItemSlot[][] = [[]]
     public items: ItemTile[] = []
+    public tickTimer: Phaser.Time.TimerEvent
+
 
     preload() {
         ItemRegistry.register({
@@ -62,6 +64,14 @@ export default class GameScene extends Phaser.Scene {
         })
 
         this.engine = new PokkitEngine(this.worldSize / this.tileSize)
+
+        this.tickTimer = this.time.addEvent({
+            delay: 5000,
+            loop: true,
+            callback: this.engine.tick,
+            callbackScope: this.engine,
+        })
+
         this.load.pack('preload', './assets/assets.json', 'preload')
     }
 
@@ -87,7 +97,7 @@ export default class GameScene extends Phaser.Scene {
 
         let tKey = this.input.keyboard.addKey("T")
         tKey.on('up', () => {
-            this.engine.tick()
+            this.tickTimer.paused = !this.tickTimer.paused;
         })
 
         let rKey = this.input.keyboard.addKey("R")
@@ -102,6 +112,8 @@ export default class GameScene extends Phaser.Scene {
         this.engine.events.on(Events.CREATED_ITEM, (item: Entity) => {
             this.createObjectForEntity(item)
         })
+
+
     }
 
     createObjectForEntity(entity: Entity): ItemTile {
@@ -121,6 +133,8 @@ export default class GameScene extends Phaser.Scene {
             this.cameras.main.scrollY -= (ppos.y - npos.y) / this.cameras.main.zoom
             this.cameras.main.scrollX -= (ppos.x - npos.x) / this.cameras.main.zoom
         }
+
+
     }
 
     constructor() {
